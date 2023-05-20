@@ -3,8 +3,16 @@ import yaml
 import gym
 from train_agent import cartpole_reward, pendulum_reward, train_agent
 from mbrl import MBRLAgent
+import torch
+
+from utils.run_args import run_args
 
 if __name__ == '__main__':
+    
+    r_args = run_args()
+    
+    device = f"cuda:{r_args['gpu']}" if torch.cuda.is_available() else 'cpu'
+    print(f'using {device}!')
     
     # list configs
     configs = sorted(os.listdir('configs'))
@@ -35,6 +43,7 @@ if __name__ == '__main__':
                             nb_trajectories=100, 
                             reward_function=reward_function,
                             action_space = action_space,
+                            device = device
                             )
 
         train_agent(env=env, 

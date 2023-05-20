@@ -92,7 +92,7 @@ class MBRLAgent:
 
         self._model_lr = model_lr
 
-        self._model = Model(self._dim_states, self._dim_actions, self._continuous_control)
+        self._model = Model(self._dim_states, self._dim_actions, self._continuous_control).to(device)
 
         # Adam optimizer
         self._model_optimizer = Adam(params = self._model.parameters(), lr = self._model_lr)
@@ -111,8 +111,6 @@ class MBRLAgent:
 
         if random:
             # Return random action
-            if self._continuous_control:
-                return self._action_space.sample()
             return self._action_space.sample()
 
         # Generate plan

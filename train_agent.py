@@ -134,7 +134,7 @@ def save_metrics(agent, tr_steps_vec, avg_reward_vec, std_reward_vec):
                 csv_writer.writerow([tr_steps_vec[i], avg_reward_vec[i], std_reward_vec[i]])
 
              
-def test_agent(env, agent, nb_episodes=30, render=True, random = False):
+def test_agent(env, agent, nb_episodes=30, render=False, random = False):
 
     ep_rewards = []
     avg_steps = 0
@@ -208,7 +208,7 @@ if __name__ == '__main__':
                            planning_horizon=30,
                            nb_trajectories=100, 
                            reward_function=reward_function,
-                           action_space = action_space,
+                           action_space = action_space, # added to avoid hardcoding the action space bounds
                            )
 
     train_agent(env=env, 
