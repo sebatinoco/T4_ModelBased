@@ -4,10 +4,9 @@ import torch.nn.functional as F
 from torch.optim import Adam
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 from buffer import Buffer
-
-import matplotlib.pyplot as plt
 
 class Model(nn.Module):
 
@@ -76,8 +75,6 @@ class RSPlanner:
         return None
 
 
-
-
 class MBRLAgent:
 
     def __init__(self, dim_states, dim_actions, continuous_control, model_lr, buffer_size, batch_size, 
@@ -129,30 +126,42 @@ class MBRLAgent:
 
 
     def update_model(self):
-        batches = self._buffer.get_batches()
-        n_batches = len(batches)
+        batches = self._buffer.get_batches() # get all batches from buffer
+        n_batches = len(batches) # number of batches
         
-        total_loss = 0
-        for ob_t, a_t, ob_t1 in batches:
+        total_loss = 0 # initialize total loss
+        for ob_t, a_t, ob_t1 in batches: # for all batches
     
+            # transform to tensor
             ob_t = torch.tensor(ob_t, device = self.device).float()
             a_t = torch.tensor(a_t, device = self.device).float()
             ob_t1 = torch.tensor(ob_t1, device = self.device).float()
             
+            # reset gradient
             self._model_optimizer.zero_grad()
+            
+            # generate prediction
             y_pred = self._model(ob_t, a_t)
             
+            # calculate MSE loss
             loss = F.mse_loss(y_pred, ob_t1)
+            
+            # backward
             loss.backward()
+            
+            # change parameters
             self._model_optimizer.step()
             
+            # sum loss to total_loss
             total_loss += loss.item()
             
+        # store mean loss
         self._loss_list += [total_loss / n_batches]
         
     def plot_loss(self, exp_name):
-        plt.figure(figsize = (12, 6))
-        plt.plot(range(len(self._loss_list)), self._loss_list, marker='.', color='C0')
+        plt.figure(figsize = (8, 5))
+        plt.plot(range(len(self._loss_list)), self._loss_list, marker = '.', color = 'C0')
         plt.xlabel('Epochs')
         plt.ylabel('Average Loss')
+        plt.tight_layout()
         plt.savefig(f'figures/{exp_name}.pdf')

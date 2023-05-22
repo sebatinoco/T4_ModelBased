@@ -2,7 +2,7 @@ import numpy as np
 
 class Buffer:
 
-    def __init__(self, dim_states, dim_actions, max_size, sample_size, continuous_control, drop_last = False):
+    def __init__(self, dim_states, dim_actions, max_size, sample_size, continuous_control, drop_last = False, shuffle = True):
 
         assert sample_size <= max_size, "Sample size cannot be greater than buffer size"
         
@@ -19,6 +19,7 @@ class Buffer:
         self._s_t1_array     = np.zeros((max_size, dim_states))
         
         self._drop_last = drop_last
+        self._shuffle = shuffle
 
 
     def store_transition(self, s_t, a_t, s_t1):
@@ -44,6 +45,7 @@ class Buffer:
     def get_batches(self):
         assert self._exps_stored + 1 > self._sample_size, "Not enough samples has been stored to start sampling"
             
+        # number of valid rows
         upper_idx = self._exps_stored if self._sample_size <= self._exps_stored < self._buffer_size else self._buffer_size
 
         # number of batches
@@ -52,13 +54,30 @@ class Buffer:
         # idxs to split batches
         idxs = [self._sample_size * i for i in range(1, n_batches)]   
         
-        # generate batches
-        s_t_batches = np.split(self._s_t_array[:self._exps_stored], idxs)
-        a_t_batches = np.split(self._a_t_array[:self._exps_stored], idxs)
-        s_t1_batches = np.split(self._s_t1_array[:self._exps_stored], idxs)
+        # generate copy
+        s_t_array = self._s_t_array[:self._exps_stored].copy()
+        a_t_array = self._a_t_array[:self._exps_stored].copy()
+        s_t1_array = self._s_t1_array[:self._exps_stored].copy()  
         
-        # drop last batch if wanted
-        if self._drop_last:
+        # shuffle data if wanted
+        if self._shuffle:
+            shuffled_rows = np.random.permutation(upper_idx)
+            s_t_array = self._s_t_array[shuffled_rows]
+            a_t_array = self._a_t_array[shuffled_rows]
+            s_t1_array = self._s_t1_array[shuffled_rows]
+        
+        # generate batches
+        s_t_batches = np.split(s_t_array, idxs)
+        a_t_batches = np.split(a_t_array, idxs)
+        s_t1_batches = np.split(s_t1_array, idxs)
+        
+        # drop empty batches
+        s_t_batches = [batch for batch in s_t_batches if batch.size != 0]
+        a_t_batches = [batch for batch in a_t_batches if batch.size != 0]
+        s_t1_batches = [batch for batch in s_t1_batches if batch.size != 0]
+        
+        # drop residual batch if wanted
+        if self._drop_last and upper_idx % self._sample_size:
             s_t_batches = s_t_batches[:-1]
             a_t_batches = a_t_batches[:-1]
             s_t1_batches = s_t1_batches[:-1]
