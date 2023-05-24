@@ -1,0 +1,6 @@
+env_name: CartPole-v1
+exp_id: exp_11
+
+agent:
+    planning_horizon: 1
+    nb_trajectories: 200

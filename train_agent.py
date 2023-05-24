@@ -3,6 +3,7 @@ import torch
 import datetime
 import gym
 import csv
+from tqdm import tqdm
 
 import numpy as np
 
@@ -12,19 +13,27 @@ from mbrl import MBRLAgent
 from utils.parse_args import parse_args
 
 def cartpole_reward(observation_batch, action_batch):
+    
     # obs = (x, x', theta, theta')
     # rew = cos(theta) - 0.01 * x^2
-    return None
     
+    x = observation_batch[:, 0]
+    theta = observation_batch[:, 2]
+
+    return np.cos(theta) - x ** 2
 
 def pendulum_reward(observation_batch, action_batch):
+    
     # obs = (cos(theta), sin(theta), theta')
     # rew = - theta^2 - 0.1 * (theta')^2 - 0.001 * a^2
-    return None
-
+    
+    theta = np.arccos(observation_batch[:, 0])
+    theta_1 = observation_batch[:, 2]
+    
+    return - theta ** 2 - 0.1 * theta_1 ** 2 - 0.001 * action_batch ** 2
 
 def train_agent(env, eval_env, agent, nb_training_steps, nb_data_collection_steps,
-                nb_epochs_for_model_training, nb_steps_between_model_updates, render=False, exp_name = 'experiment'):
+                nb_epochs_for_model_training, nb_steps_between_model_updates, render=False, exp_name = 'experiment', random = False):
 
     tr_steps_vec, avg_reward_vec, std_reward_vec = [], [], []
     _, (axes) = plt.subplots(1, 1, figsize=(12,4))
@@ -36,12 +45,12 @@ def train_agent(env, eval_env, agent, nb_training_steps, nb_data_collection_step
     episode_steps = 0
 
     update_performance_metrics(agent, eval_env, 0, axes, tr_steps_vec, 
-                               avg_reward_vec, std_reward_vec, random = True)
+                               avg_reward_vec, std_reward_vec, random = random)
 
     print("Collecting data to train the model")
-    for model_tr_step in range(nb_data_collection_steps):
+    for model_tr_step in tqdm(range(nb_data_collection_steps)):
 
-        action = agent.select_action(ob_t, random=True)
+        action = agent.select_action(ob_t, random = random)
 
         ob_t1, reward, done, _ = env.step(action)
 
@@ -68,9 +77,8 @@ def train_agent(env, eval_env, agent, nb_training_steps, nb_data_collection_step
         agent.update_model()
 
     # plot loss
-    agent.plot_loss(exp_name)
+    #agent.plot_loss(exp_name)
 
-    """
     # Part II only
     for tr_step in range(nb_training_steps):
 
@@ -109,8 +117,10 @@ def train_agent(env, eval_env, agent, nb_training_steps, nb_data_collection_step
             episode_reward = 0
             episode_steps = 0
 
-    save_metrics(agent, tr_steps_vec, avg_reward_vec, std_reward_vec)
-    """
+    plt.savefig(f'figures/experiments/{exp_name}.pdf')
+    plt.close()
+
+    save_metrics(agent, tr_steps_vec, avg_reward_vec, std_reward_vec, exp_name)
 
 def update_performance_metrics(agent, eval_env, training_step, axes, tr_steps_vec, avg_reward_vec, std_reward_vec, random = False):
 
@@ -126,8 +136,8 @@ def update_performance_metrics(agent, eval_env, training_step, axes, tr_steps_ve
                              std_reward_vec)
 
 
-def save_metrics(agent, tr_steps_vec, avg_reward_vec, std_reward_vec):
-    with open('metrics'+datetime.datetime.now().strftime('%H:%M:%S')+'.csv', 'w') as csv_file:
+def save_metrics(agent, tr_steps_vec, avg_reward_vec, std_reward_vec, exp_name):
+    with open(f'metrics/{exp_name}.csv', 'w') as csv_file:
             csv_writer = csv.writer(csv_file, delimiter='\t')
             csv_writer.writerow(['steps', 'avg_reward', 'std_reward'])
             for i in range(len(tr_steps_vec)):
@@ -203,10 +213,10 @@ if __name__ == '__main__':
                            dim_actions=dim_actions,
                            continuous_control=continuous_control,
                            model_lr=0.001,
-                           buffer_size=30000,
+                           buffer_size=args['buffer_size'],
                            batch_size=256,
-                           planning_horizon=30,
-                           nb_trajectories=100, 
+                           planning_horizon=args['planning_horizon'],
+                           nb_trajectories=args['nb_trajectories'], 
                            reward_function=reward_function,
                            action_space = action_space, # added to avoid hardcoding the action space bounds
                            )
@@ -214,9 +224,9 @@ if __name__ == '__main__':
     train_agent(env=env, 
                 eval_env=eval_env,
                 agent=mbrl_agent,
-                nb_data_collection_steps=10000,
+                nb_data_collection_steps=args['nb_data_collection_steps'],
                 nb_steps_between_model_updates=1000,
                 nb_epochs_for_model_training=10,
-                nb_training_steps=30000,
-                exp_name = env_name,
+                nb_training_steps=args['nb_training_steps'],
+                exp_name = args['exp_name'],
                 )

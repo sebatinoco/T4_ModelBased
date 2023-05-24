@@ -1,0 +1,6 @@
+env_name: Pendulum-v1
+exp_id: exp_31
+
+agent:
+    planning_horizon: 30
+    nb_trajectories: 1000

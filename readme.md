@@ -3,6 +3,7 @@
 El proyecto se estructura de las siguientes carpetas:
 
 - /.: carpeta principal, contiene los script para ejecutar el proyecto y otras carpetas de utilidad
+- /configs: carpeta con las configuraciones de los experimentos en formato .yaml
 - /figures: carpeta para guardar las figuras exportadas en formato .pdf
 - /utils: carpeta para guardar algunas funciones auxiliares a usar en el proyecto
 
@@ -14,6 +15,7 @@ El archivo requirements.txt contiene todas las dependencias necesarias para ejec
 - gym==0.23.1
 - torch==2.0.0
 - PyYAML==6.0 
+- tqdm==4.65.0
 
 Además, los experimentos fueron ejecutados sobre python==3.9.
 
