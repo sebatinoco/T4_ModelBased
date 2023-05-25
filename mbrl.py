@@ -61,34 +61,29 @@ class RSPlanner:
         random_actions = np.array([[self._action_space.sample() for _ in range(self._planning_horizon)] for __ in range(self._nb_trajectories)]) # _nb_trajectories sequences of actions
         
         # Construct initial observation 
+        observation = np.tile(observation, (self._nb_trajectories, 1)) # repeat observation _nb_trajectories times
         o_t = torch.tensor(observation, device = self._device).unsqueeze(0) if observation.ndim == 1 else torch.tensor(observation, device = self._device)
 
         rewards = torch.zeros((self._nb_trajectories, ))
-        for j in range(self._nb_trajectories):
-            total_reward = 0
-            for i in range(self._planning_horizon):
-                # Get a_t
-                if self._continuous_control:
-                    a_t = random_actions[j, i]
-                else:
-                    a_t = random_actions[j, i]
-                    a_t = np.eye(self._dim_actions)[a_t].astype('float32')
+        for i in range(self._planning_horizon):
+            # Get a_t
+            a_t = random_actions[:, i]
+            if not self._continuous_control:
+                a_t = np.eye(self._dim_actions)[a_t].astype('float32')
 
-                a_t = torch.tensor(a_t, device = self._device).unsqueeze(0) if a_t.ndim == 1 else torch.tensor(a_t, device = self._device)
+            a_t = torch.tensor(a_t, device = self._device).unsqueeze(0) if a_t.ndim == 1 else torch.tensor(a_t, device = self._device)
 
-                # Predict next observation using the model
-                with torch.no_grad():
-                    o_t1 = self._model(o_t, a_t)
+            # Predict next observation using the model
+            with torch.no_grad():
+                o_t1 = self._model(o_t, a_t)
 
-                # Compute reward (use reward_function)
-                total_reward += self._reward_function(o_t, a_t)
-                
-                o_t = o_t1
-                
-            rewards[j] = total_reward
+            # Compute reward (use reward_function)
+            rewards += self._reward_function(o_t, a_t)
+            
+            o_t = o_t1
 
         # Return the best sequence of actions
-        return random_actions[np.argmax(rewards)]
+        return random_actions[np.argmax(rewards), :]
 
 
 class MBRLAgent:

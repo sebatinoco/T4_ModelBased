@@ -29,6 +29,7 @@ def pendulum_reward(observation_batch, action_batch):
     
     theta = np.arccos(observation_batch[:, 0])
     theta_1 = observation_batch[:, 2]
+    action_batch = action_batch.squeeze()
     
     return - theta ** 2 - 0.1 * theta_1 ** 2 - 0.001 * action_batch ** 2
 

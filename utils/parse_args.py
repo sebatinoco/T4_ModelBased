@@ -11,7 +11,7 @@ def parse_args():
     parser.add_argument('--nb_trajectories', type = int, default = 100, help = 'number of trajectories to consider at planning')
     parser.add_argument('--buffer_size', type = int, default = 30000, help = 'replay buffer size')
     parser.add_argument('--nb_data_collection_steps', type = int, default = 10000, help = 'steps to collect data')
-    parser.add_argument('--nb_training_step', type = int, default = 30000, help = 'number of training steps')
+    parser.add_argument('--nb_training_steps', type = int, default = 30000, help = 'number of training steps')
     parser.add_argument('--exp_name', type = str, default = 'experiment', help = 'name of the experiment to store results')
     
     # consolidate args
