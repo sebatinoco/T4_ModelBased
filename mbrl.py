@@ -53,11 +53,6 @@ class RSPlanner:
         
     def generate_plan(self, observation):
         # Generate a sequence of random actions
-        if self._continuous_control:
-            random_actions = None
-        else:
-            random_actions = None
-            
         random_actions = np.array([[self._action_space.sample() for _ in range(self._planning_horizon)] for __ in range(self._nb_trajectories)]) # _nb_trajectories sequences of actions
         
         # Construct initial observation 
@@ -69,7 +64,7 @@ class RSPlanner:
             # Get a_t
             a_t = random_actions[:, i]
             if not self._continuous_control:
-                a_t = np.eye(self._dim_actions)[a_t].astype('float32')
+                a_t = np.eye(self._dim_actions)[a_t].astype('float32') # one hot actions if discrete
 
             a_t = torch.tensor(a_t, device = self._device).unsqueeze(0) if a_t.ndim == 1 else torch.tensor(a_t, device = self._device)
 
@@ -125,10 +120,7 @@ class MBRLAgent:
         # Generate plan
         plan = self._planner.generate_plan(observation)
 
-        # Return the first action of the plan
-        if self._continuous_control:
-            return plan[0]
-        
+        # Return the first action of the plan        
         return plan[0]
 
 

@@ -20,7 +20,7 @@ def cartpole_reward(observation_batch, action_batch):
     x = observation_batch[:, 0]
     theta = observation_batch[:, 2]
 
-    return np.cos(theta) - x ** 2
+    return np.cos(theta) - 0.01 * x ** 2
 
 def pendulum_reward(observation_batch, action_batch):
     
@@ -83,11 +83,12 @@ def train_agent(env, eval_env, agent, nb_training_steps, nb_data_collection_step
     # Part II only
     for tr_step in range(nb_training_steps):
 
+        # update plot
         if (tr_step + 1) % (nb_training_steps / 5) == 0:
             update_performance_metrics(agent, eval_env, tr_step + 1, axes, tr_steps_vec, 
                                         avg_reward_vec, std_reward_vec)
 
-
+        # update model
         if (tr_step + 1) % nb_steps_between_model_updates == 0:
             print("Updating model")
             for _ in range(nb_epochs_for_model_training):
