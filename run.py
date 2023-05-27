@@ -6,7 +6,7 @@ from mbrl import MBRLAgent
 import torch
 import time
 
-from utils.run_args import run_args
+from utils.run_args import run_args, plot_experiment
 
 if __name__ == '__main__':
     
@@ -63,7 +63,6 @@ if __name__ == '__main__':
                                 buffer_size=30000,
                                 batch_size=256,
                                 reward_function=reward_function,
-                                action_space = action_space, # added to avoid hardcoding the action space bounds
                                 device = device,
                                 **args['agent'],
                                 )
@@ -77,3 +76,15 @@ if __name__ == '__main__':
                         nb_training_steps=30000,
                         exp_name = exp_name,
                         )
+            
+        execution_time = time.time() - start_time
+
+        print(f'{execution_time:.2f} seconds -- {(execution_time/60):.2f} minutes -- {(execution_time/3600):.2f} hours')
+        
+
+    # plot experiments
+    configs = [config.replace('.yaml', '') for config in configs]
+
+    # plot for each experiment
+    for config in configs:
+        plot_experiment(config)
