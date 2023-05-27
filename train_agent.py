@@ -31,11 +31,11 @@ def pendulum_reward(observation_batch, action_batch):
     # rew = - theta^2 - 0.1 * (theta')^2 - 0.001 * a^2
     
     cos_theta = torch.clamp(observation_batch[:, 0], min = -1, max = 1) # clamp values between -1 and 1
-    theta = np.arccos(cos_theta) # calculate theta
+    theta = torch.arccos(cos_theta) # calculate theta
     theta_1 = observation_batch[:, 2] # obtain theta'
     action_batch = action_batch.squeeze() # adjust dimensions of action_batch
     
-    return - (angle_normalize(theta) ** 2 + 0.1 * theta_1 ** 2 + 0.001 * action_batch ** 2)
+    return - (angle_normalize(theta) ** 2 + 0.1 * theta_1 ** 2 + 0.001 * action_batch ** 2).cpu().numpy()
 
 def train_agent(env, eval_env, agent, nb_training_steps, nb_data_collection_steps,
                 nb_epochs_for_model_training, nb_steps_between_model_updates, render=False, exp_name = 'experiment', random = False):
