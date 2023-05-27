@@ -1,10 +1,13 @@
-# Avance Tarea 4
+# Tarea 4
 
 El proyecto se estructura de las siguientes carpetas:
 
 - /.: carpeta principal, contiene los script para ejecutar el proyecto y otras carpetas de utilidad
 - /configs: carpeta con las configuraciones de los experimentos en formato .yaml
 - /figures: carpeta para guardar las figuras exportadas en formato .pdf
+    - /agg_expetiments: contiene las figuras de los experimentos agregados según lo requerido
+    - /experiments: contiene las figuras de experimentos individuales
+- /metrics: carpeta con los archivos .csv para generar los gráficos del reporte
 - /utils: carpeta para guardar algunas funciones auxiliares a usar en el proyecto
 
 El archivo requirements.txt contiene todas las dependencias necesarias para ejecutar este proyecto. Se resaltan las siguientes librerías:

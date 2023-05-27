@@ -22,16 +22,20 @@ def cartpole_reward(observation_batch, action_batch):
 
     return np.cos(theta) - 0.01 * x ** 2
 
+def angle_normalize(x):
+    return ((x + np.pi) % (2 * np.pi)) - np.pi
+
 def pendulum_reward(observation_batch, action_batch):
     
     # obs = (cos(theta), sin(theta), theta')
     # rew = - theta^2 - 0.1 * (theta')^2 - 0.001 * a^2
     
-    theta = np.arccos(observation_batch[:, 0])
-    theta_1 = observation_batch[:, 2]
-    action_batch = action_batch.squeeze()
+    cos_theta = torch.clamp(observation_batch[:, 0], min = -1, max = 1) # clamp values between -1 and 1
+    theta = np.arccos(cos_theta) # calculate theta
+    theta_1 = observation_batch[:, 2] # obtain theta'
+    action_batch = action_batch.squeeze() # adjust dimensions of action_batch
     
-    return - theta ** 2 - 0.1 * theta_1 ** 2 - 0.001 * action_batch ** 2
+    return - (angle_normalize(theta) ** 2 + 0.1 * theta_1 ** 2 + 0.001 * action_batch ** 2)
 
 def train_agent(env, eval_env, agent, nb_training_steps, nb_data_collection_steps,
                 nb_epochs_for_model_training, nb_steps_between_model_updates, render=False, exp_name = 'experiment', random = False):
