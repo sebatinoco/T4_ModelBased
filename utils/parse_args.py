@@ -1,4 +1,5 @@
 import argparse
+from distutils.util import strtobool
 
 def parse_args():
     
@@ -6,7 +7,7 @@ def parse_args():
     
     # arguments
     parser.add_argument('--env_name', type = str, default = 'Pendulum-v1', help = 'environment to run the experiment') 
-    parser.add_argument('--random', type = str, default = 'False', help = 'boolean to sample random actions if wanted')
+    parser.add_argument('--random', type=lambda x: bool(strtobool(x)), default = False, help = 'boolean to sample random actions if wanted')
     parser.add_argument('--planning_horizon', type = int, default = 30, help = 'planning horizon to generate plan')
     parser.add_argument('--nb_trajectories', type = int, default = 100, help = 'number of trajectories to consider at planning')
     parser.add_argument('--buffer_size', type = int, default = 30000, help = 'replay buffer size')

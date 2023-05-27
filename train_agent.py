@@ -224,7 +224,6 @@ if __name__ == '__main__':
                            planning_horizon=args['planning_horizon'],
                            nb_trajectories=args['nb_trajectories'], 
                            reward_function=reward_function,
-                           action_space = action_space, # added to avoid hardcoding the action space bounds
                            )
 
     train_agent(env=env, 
@@ -235,4 +234,5 @@ if __name__ == '__main__':
                 nb_epochs_for_model_training=10,
                 nb_training_steps=args['nb_training_steps'],
                 exp_name = args['exp_name'],
+                random = args['random'],
                 )

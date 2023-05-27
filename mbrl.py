@@ -35,7 +35,7 @@ class Model(nn.Module):
 
 class RSPlanner:
 
-    def __init__(self, dim_states, dim_actions, continuous_control, model, planning_horizon, nb_trajectories, reward_function, action_space, device = 'cpu'):
+    def __init__(self, dim_states, dim_actions, continuous_control, model, planning_horizon, nb_trajectories, reward_function, device = 'cpu'):
         self._dim_states = dim_states
         self._dim_actions = dim_actions
         self._continuous_control = continuous_control
@@ -46,27 +46,33 @@ class RSPlanner:
         self._nb_trajectories = nb_trajectories
         self._reward_function = reward_function
         
-        self._action_space = action_space
-        
         self._device = device
 
         
     def generate_plan(self, observation):
         # Generate a sequence of random actions
-        random_actions = np.array([[self._action_space.sample() for _ in range(self._planning_horizon)] for __ in range(self._nb_trajectories)]) # _nb_trajectories sequences of actions
+        if self._continuous_control:
+            # sample from pendulum action space
+            random_actions = np.random.uniform(-2, 2, size = (self._nb_trajectories, self._planning_horizon))
+        else:
+            # sample from cartpole action space
+            random_actions = np.random.choice([0, 1], size = (self._nb_trajectories, self._planning_horizon))
         
         # Construct initial observation 
         observation = np.tile(observation, (self._nb_trajectories, 1)) # repeat observation _nb_trajectories times
-        o_t = torch.tensor(observation, device = self._device).unsqueeze(0) if observation.ndim == 1 else torch.tensor(observation, device = self._device)
+        o_t = torch.tensor(observation, device = self._device)
 
         rewards = torch.zeros((self._nb_trajectories, ))
         for i in range(self._planning_horizon):
             # Get a_t
             a_t = random_actions[:, i]
-            if not self._continuous_control:
-                a_t = np.eye(self._dim_actions)[a_t].astype('float32') # one hot actions if discrete
-
-            a_t = torch.tensor(a_t, device = self._device).unsqueeze(0) if a_t.ndim == 1 else torch.tensor(a_t, device = self._device)
+            
+            if self._continuous_control:
+                a_t = np.expand_dims(a_t, 1)
+            else:
+                a_t = np.eye(self._dim_actions)[a_t] # one hot actions if discrete
+            
+            a_t = torch.tensor(a_t, device = self._device).float()
 
             # Predict next observation using the model
             with torch.no_grad():
@@ -84,14 +90,12 @@ class RSPlanner:
 class MBRLAgent:
 
     def __init__(self, dim_states, dim_actions, continuous_control, model_lr, buffer_size, batch_size, 
-                       planning_horizon, nb_trajectories, reward_function, action_space, device = 'cpu'):
+                       planning_horizon, nb_trajectories, reward_function, device = 'cpu'):
 
         self._dim_states = dim_states
         self._dim_actions = dim_actions
 
         self._continuous_control = continuous_control
-        
-        self._action_space = action_space
 
         self._model_lr = model_lr
 
@@ -103,8 +107,8 @@ class MBRLAgent:
         self._buffer = Buffer(self._dim_states, self._dim_actions, buffer_size, batch_size, continuous_control)
         
         self._planner = RSPlanner(self._dim_states, self._dim_actions, self._continuous_control, 
-                                  self._model, planning_horizon, nb_trajectories, reward_function,
-                                  action_space, device = device)
+                                  self._model, planning_horizon, nb_trajectories, reward_function, 
+                                  device = device)
 
         self.device = device
         
@@ -115,14 +119,21 @@ class MBRLAgent:
 
         if random:
             # Return random action
-            return self._action_space.sample()
+            
+            if self._continuous_control:
+                return np.random.uniform(-2, 2, size = (1,))
+            else:
+                return np.random.choice([0, 1], size = (1,))
 
         # Generate plan
         plan = self._planner.generate_plan(observation)
 
         # Return the first action of the plan        
+        
+        if self._continuous_control:
+            return np.array(plan[0], ndmin = 1)
+        
         return plan[0]
-
 
     def store_transition(self, s_t, a_t, s_t1):
         
@@ -160,7 +171,7 @@ class MBRLAgent:
             total_loss += loss.item()
             
         # store mean loss
-        self._loss_list += [total_loss / n_batches]
+        #self._loss_list += [total_loss / n_batches]
         
     def plot_loss(self, exp_name):
         plt.figure(figsize = (8, 5))
