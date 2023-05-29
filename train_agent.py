@@ -25,17 +25,23 @@ def cartpole_reward(observation_batch, action_batch):
 def angle_normalize(x):
     return ((x + np.pi) % (2 * np.pi)) - np.pi
 
-def pendulum_reward(observation_batch, action_batch):
+def pendulum_reward(observation_batch, action_batch, correction = True):
     
     # obs = (cos(theta), sin(theta), theta')
     # rew = - theta^2 - 0.1 * (theta')^2 - 0.001 * a^2
     
-    cos_theta = torch.clamp(observation_batch[:, 0], min = -1, max = 1) # clamp values between -1 and 1
-    theta = torch.arccos(cos_theta) # calculate theta
     theta_1 = observation_batch[:, 2] # obtain theta'
     action_batch = action_batch.squeeze() # adjust dimensions of action_batch
+    cos_theta = observation_batch[:, 0]
+    if correction:
+        cos_theta = torch.clamp(cos_theta, min = -1, max = 1) # clamp values between -1 and 1   
+        theta = torch.arccos(cos_theta) # calculate theta
+        
+        return - (angle_normalize(theta) ** 2 + 0.1 * theta_1 ** 2 + 0.001 * action_batch ** 2).cpu().numpy()
     
-    return - (angle_normalize(theta) ** 2 + 0.1 * theta_1 ** 2 + 0.001 * action_batch ** 2).cpu().numpy()
+    theta = torch.arccos(cos_theta) # calculate theta
+    
+    return - (theta ** 2 + 0.1 * theta_1 ** 2 + 0.001 * action_batch ** 2).cpu().numpy()
 
 def train_agent(env, eval_env, agent, nb_training_steps, nb_data_collection_steps,
                 nb_epochs_for_model_training, nb_steps_between_model_updates, render=False, exp_name = 'experiment', random = False):
@@ -224,6 +230,7 @@ if __name__ == '__main__':
                            planning_horizon=args['planning_horizon'],
                            nb_trajectories=args['nb_trajectories'], 
                            reward_function=reward_function,
+                           correction=args['correction'],
                            )
 
     train_agent(env=env, 

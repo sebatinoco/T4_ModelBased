@@ -1,0 +1,7 @@
+env_name: Pendulum-v1
+exp_id: exp_11_correction
+
+agent:
+    planning_horizon: 30
+    nb_trajectories: 100
+    correction: True

@@ -14,6 +14,7 @@ def parse_args():
     parser.add_argument('--nb_data_collection_steps', type = int, default = 10000, help = 'steps to collect data')
     parser.add_argument('--nb_training_steps', type = int, default = 30000, help = 'number of training steps')
     parser.add_argument('--exp_name', type = str, default = 'experiment', help = 'name of the experiment to store results')
+    parser.add_argument('--correction', type=lambda x: bool(strtobool(x)), default = True, help = 'boolean to apply correction to pendulum rewards')
     
     # consolidate args
     args = parser.parse_args()

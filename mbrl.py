@@ -35,7 +35,7 @@ class Model(nn.Module):
 
 class RSPlanner:
 
-    def __init__(self, dim_states, dim_actions, continuous_control, model, planning_horizon, nb_trajectories, reward_function, device = 'cpu'):
+    def __init__(self, dim_states, dim_actions, continuous_control, model, planning_horizon, nb_trajectories, reward_function, device = 'cpu', correction = True):
         self._dim_states = dim_states
         self._dim_actions = dim_actions
         self._continuous_control = continuous_control
@@ -47,6 +47,8 @@ class RSPlanner:
         self._reward_function = reward_function
         
         self._device = device
+        
+        self._correction = correction # bool for applying correction to rewards of pendulum
 
         
     def generate_plan(self, observation):
@@ -79,7 +81,10 @@ class RSPlanner:
                 o_t1 = self._model(o_t, a_t)
 
             # Compute reward (use reward_function)
-            rewards += self._reward_function(o_t, a_t)
+            if self._continuous_control:
+                rewards += self._reward_function(o_t, a_t, self._correction)
+            else:
+                rewards += self._reward_function(o_t, a_t)
             
             o_t = o_t1
 
@@ -90,7 +95,7 @@ class RSPlanner:
 class MBRLAgent:
 
     def __init__(self, dim_states, dim_actions, continuous_control, model_lr, buffer_size, batch_size, 
-                       planning_horizon, nb_trajectories, reward_function, device = 'cpu'):
+                       planning_horizon, nb_trajectories, reward_function, device = 'cpu', correction = True):
 
         self._dim_states = dim_states
         self._dim_actions = dim_actions
@@ -108,12 +113,11 @@ class MBRLAgent:
         
         self._planner = RSPlanner(self._dim_states, self._dim_actions, self._continuous_control, 
                                   self._model, planning_horizon, nb_trajectories, reward_function, 
-                                  device = device)
+                                  device = device, correction = correction)
 
         self.device = device
         
         self._loss_list = []
-
 
     def select_action(self, observation, random=False):
 
@@ -129,7 +133,6 @@ class MBRLAgent:
         plan = self._planner.generate_plan(observation)
 
         # Return the first action of the plan        
-        
         if self._continuous_control:
             return np.array(plan[0], ndmin = 1)
         

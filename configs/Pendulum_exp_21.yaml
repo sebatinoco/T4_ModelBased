@@ -4,3 +4,4 @@ exp_id: exp_21
 agent:
     planning_horizon: 30
     nb_trajectories: 500
+    correction: False
