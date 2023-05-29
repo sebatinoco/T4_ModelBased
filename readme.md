@@ -26,3 +26,5 @@ Ejecutar este proyecto es sencillo, sólo es necesario seguir los siguientes pas
 
 1. Instalar las librerías necesarias: `pip install -r requirements.txt`
 2. Replicar los experimentos: `python run.py`
+
+Finalmente, el informe de resultados se encuentra en la ruta `./Informe.pdf`
